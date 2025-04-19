@@ -171,11 +171,16 @@ class StudentManagementGUI:
             messagebox.showwarning("警告", "请填写所有字段！")
             return
         
-        if not age.isdigit():
-            messagebox.showwarning("警告", "年龄必须是数字！")
+        try:
+            # 尝试转换为整数，验证年龄有效性
+            age_int = int(age)
+            if age_int <= 0:
+                raise ValueError("年龄必须大于0")
+        except ValueError:
+            messagebox.showwarning("警告", "年龄必须是有效的正整数！")
             return
         
-        result = Students.to_json([sid, name, age])
+        result = Students.to_json([sid, name, age_int])  # 直接传递整数
         messagebox.showinfo("结果", result)
         self.clear_entries()
         self.load_students()

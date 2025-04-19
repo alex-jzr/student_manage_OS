@@ -9,11 +9,12 @@ class Students:
     # 定义统一的编码常量
     ENCODING = 'utf-8'
     
-    def __init__(self, sid: Union[str, int], name: str, age: int):
+    def __init__(self, sid: Union[str, int], name: str, age: Union[int, str]):
         self.sid = str(sid)
         self.name = name
-        self.age = age
-
+        # 确保年龄为整数
+        self.age = int(age) if isinstance(age, str) and age.isdigit() else int(age)
+    
     def to_list(self) -> List[Union[str, int]]:
         return [self.sid, self.name, self.age]
     
@@ -26,13 +27,23 @@ class Students:
         else:
             try:
                 with open(cls.JSON_FILE, 'r', encoding=cls.ENCODING) as f:
-                    json.load(f)
+                    data = json.load(f)
+                    # 修复现有数据中的年龄类型问题
+                    if isinstance(data, list):
+                        modified = False
+                        for student in data:
+                            if isinstance(student.get('age'), str) and student['age'].isdigit():
+                                student['age'] = int(student['age'])
+                                modified = True
+                        if modified:
+                            with open(cls.JSON_FILE, 'w', encoding=cls.ENCODING) as f_write:
+                                json.dump(data, f_write, ensure_ascii=False, indent=4)
             except (json.JSONDecodeError, UnicodeDecodeError):
                 with open(cls.JSON_FILE, 'w', encoding=cls.ENCODING) as f:
                     json.dump([], f, ensure_ascii=False, indent=4)
                     
     @classmethod
-    def search_student(cls, sid: Union[str, int], return_stile: bool = True) -> Union[bool, List[Dict], str]:
+    def search_student(cls, sid: Union[str, int], return_style: bool = True) -> Union[bool, List[Dict], str]:
         """查询学生信息，完全支持中文"""
         cls._ensure_file_exists()
         try:
@@ -40,7 +51,7 @@ class Students:
                 students = json.load(f)
                 found_students = [s for s in students if str(sid) == str(s['sid'])]
                 
-                if return_stile:
+                if return_style:
                     return len(found_students) > 0
                 return found_students
                 
@@ -53,6 +64,9 @@ class Students:
         cls._ensure_file_exists()
         try:
             sid = str(info_list[0])
+            name = str(info_list[1])
+            # 确保年龄为整数
+            age = int(info_list[2]) if isinstance(info_list[2], str) and info_list[2].isdigit() else int(info_list[2])
             
             with open(cls.JSON_FILE, 'r+', encoding=cls.ENCODING) as f:
                 students = json.load(f)
@@ -62,8 +76,8 @@ class Students:
                     
                 students.append({
                     'sid': sid,
-                    'name': info_list[1],
-                    'age': info_list[2]
+                    'name': name,
+                    'age': age  # 确保存储为整数
                 })
                 
                 f.seek(0)
@@ -72,6 +86,8 @@ class Students:
                 
             return '学生信息已添加'
             
+        except ValueError:
+            return '年龄必须是有效数字'
         except Exception as e:
             return f'操作失败: {str(e)}'
         
