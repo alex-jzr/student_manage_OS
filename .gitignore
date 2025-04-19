@@ -1,2 +1,15 @@
 ".class_students.py.swp" 
 "__pycache__/" 
+
+# Python
+__pycache__/
+*.py[cod]
+*.swp
+
+# Environment
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
